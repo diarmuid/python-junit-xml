@@ -34,7 +34,7 @@ Based on the following understanding of what Jenkins can parse for JUnit XML fil
 	<testcase classname="package.directory" name="003-skipped-test" time="0">
 	    <skipped message="SKIPPED Test" type="skipped">
                 the output of the testcase
-            </skipped>	
+            </skipped>
 	</testcase>
         <testcase classname="testdb.directory" name="003-passed-test" time="10">
             <system-out>
@@ -111,32 +111,36 @@ class TestSuite(object):
             # failures
             if case.is_failure():
                 attrs = {'type': 'failure'}
-                if case.failure_message:
-                    attrs['message'] = case.failure_message
-                failure_element = ET.Element("failure", attrs)
-                if case.failure_output:
-                    failure_element.text = case.failure_output
-                test_case_element.append(failure_element)
+                for failure in case.failures:
+                    if failure['message']:
+                        attrs['message'] = failure['message']
+                    failure_element = ET.Element("failure", attrs)
+                    if failure['output']:
+                        failure_element.text =failure['output']
+                    test_case_element.append(failure_element)
+
 
             # errors
             if case.is_error():
                 attrs = {'type': 'error'}
-                if case.error_message:
-                    attrs['message'] = case.error_message
-                error_element = ET.Element("error", attrs)
-                if case.error_output:
-                    error_element.text = case.error_output
-                test_case_element.append(error_element)
+                for error in case.errors:
+                    if error['message']:
+                        attrs['message'] = error['message']
+                    error_element = ET.Element("error", attrs)
+                    if error['output']:
+                        error_element.text =error['output']
+                    test_case_element.append(error_element)
 
             # skippeds
             if case.is_skipped():
                 attrs = {'type': 'skipped'}
-                if case.skipped_message:
-                    attrs['message'] = case.skipped_message
-                skipped_element = ET.Element("skipped", attrs)
-                if case.error_output:
-                    skipped_element.text = case.skipped_output
-                test_case_element.append(skipped_element)
+                for skipped in case.skips:
+                    if skipped['message']:
+                        attrs['message'] = skipped['message']
+                    skipped_element = ET.Element("skipped", attrs)
+                    if skipped['output']:
+                        skipped_element.text =skipped['output']
+                    test_case_element.append(skipped_element)
 
             # test stdout
             if case.stdout:
@@ -206,42 +210,31 @@ class TestCase(object):
         self.stdout = stdout
         self.stderr = stderr
         self.classname = classname
-        self.error_message = None
-        self.error_output = None
-        self.failure_message = None
-        self.failure_output = None
-        self.skipped_message = None
-        self.skipped_output = None
+        self.errors = [] # list of dicts
+        self.failures = []
+        self.skips = []
 
     def add_error_info(self, message=None, output=None):
         """Adds an error message, output, or both to the test case"""
-        if message:
-            self.error_message = message
-        if output:
-            self.error_output = output
+        self.errors.append({'message' : message, 'output': output})
 
     def add_failure_info(self, message=None, output=None):
         """Adds a failure message, output, or both to the test case"""
-        if message:
-            self.failure_message = message
-        if output:
-            self.failure_output = output
+        self.failures.append({'message' : message, 'output': output})
+
 
     def add_skipped_info(self, message=None, output=None):
         """Adds a skipped message, output, or both to the test case"""
-        if message:
-            self.skipped_message = message
-        if output:
-            self.skipped_output = output
+        self.skips.append({'message' : message, 'output': output})
 
     def is_failure(self):
         """returns true if this test case is a failure"""
-        return self.failure_output or self.failure_message
+        return self.failures
 
     def is_error(self):
         """returns true if this test case is an error"""
-        return self.error_output or self.error_message
+        return self.errors
 
     def is_skipped(self):
         """returns true if this test case has been skipped"""
-        return self.skipped_output or self.skipped_message
+        return self.skips

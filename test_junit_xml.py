@@ -220,6 +220,14 @@ class TestCaseTests(unittest.TestCase):
         verify_test_case(self, tcs[0], {'name': 'Error-Message-and-Output'},
                          error_message="error message", error_output="I errored!")
 
+    def test_init_two_error(self):
+        tc = TestCase('Error-Message-and-Output-Two')
+        tc.add_error_info("error message", "I errored!")
+        tc.add_error_info("error message2", "I erroredagain!")
+        (ts, tcs) = serialize_and_read(TestSuite('test', [tc]))[0]
+        verify_test_case(self, tcs[0], {'name': 'Error-Message-and-Output-Two'},
+                         error_message="error message", error_output="I errored!")
+
     def test_init_skipped_message(self):
         tc = TestCase('Skipped-Message')
         tc.add_skipped_info("skipped message")
